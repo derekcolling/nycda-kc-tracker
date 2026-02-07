@@ -1469,11 +1469,8 @@
       });
 
       searchClear.addEventListener('click', function () {
-        searchInput.value = '';
-        searchQuery = '';
-        searchClear.classList.remove('visible');
-        searchInput.focus();
-        renderSchedule();
+        // "X" now acts as a full reset-to-live
+        window.scrollToNowPlaying();
       });
 
       window.resetAllFilters = function () {
