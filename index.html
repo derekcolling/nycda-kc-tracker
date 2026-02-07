@@ -492,23 +492,11 @@
     }
 
     .filter-chip.is-live:not(.active) {
-      box-shadow: 0 0 0 2px var(--now-playing-bg);
-      animation: pulse-live-v2 2s infinite;
+      /* Static green background when live but not active */
+      background: var(--now-playing-bg);
     }
 
-    @keyframes pulse-live-v2 {
-      0% {
-        box-shadow: 0 0 0 0 rgba(134, 167, 137, 0.7);
-      }
 
-      70% {
-        box-shadow: 0 0 0 6px rgba(134, 167, 137, 0);
-      }
-
-      100% {
-        box-shadow: 0 0 0 0 rgba(134, 167, 137, 0);
-      }
-    }
 
     .filter-chip:active {
       transform: scale(0.95);
