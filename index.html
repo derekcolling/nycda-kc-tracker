@@ -986,8 +986,7 @@
 
   <!-- Filters -->
   <div class="filters" id="filterBar">
-    <button class="filter-chip active" data-filter="day" data-value="all" onclick="setFilter('day','all',this)">Both
-      Days</button>
+
     <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">Day 1</button>
     <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">Day 2</button>
     <select class="filter-select" id="studioFilter" onchange="setStudioFilter(this)">
@@ -1391,10 +1390,16 @@
 
       // ─── Filters ───
       window.setFilter = function (type, value, btn) {
-        filters[type] = value;
-        // Update day chip UI
-        document.querySelectorAll(`[data-filter="${type}"]`).forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
+        // Toggle logic: if clicking the active filter, unselect it (revert to 'all')
+        if (filters[type] === value) {
+          filters[type] = 'all';
+          btn.classList.remove('active');
+        } else {
+          filters[type] = value;
+          // Update UI: remove active from others, add to this one
+          document.querySelectorAll(`[data-filter="${type}"]`).forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+        }
         renderSchedule();
       };
 
