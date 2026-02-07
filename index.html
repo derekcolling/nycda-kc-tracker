@@ -486,14 +486,16 @@
     }
 
     .filter-chip.is-live {
-      background: var(--now-playing-bg);
-      color: #fff;
+      /* Base style, background handled by .active or :not(.active) specific rules */
       position: relative;
     }
 
     .filter-chip.is-live:not(.active) {
-      /* Static green background when live but not active */
-      background: var(--now-playing-bg);
+      /* Outlined style when live but not active */
+      background: transparent;
+      color: var(--now-playing-bg);
+      box-shadow: inset 0 0 0 2px var(--now-playing-bg);
+      font-weight: 700;
     }
 
 
