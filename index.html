@@ -408,7 +408,10 @@
       position: sticky;
       top: 96px;
       /* Below header + tabs */
-      z-index: 70;
+      z-index: 85;
+      /* Increased */
+      box-shadow: 0 -2px 0 var(--bg);
+      /* Bridge potential subpixel gap */
     }
 
     /* When quick glance is visible, push search bar down */
@@ -448,7 +451,7 @@
 
     /* ── Filter Chips ── */
     .filters {
-      padding: 8px 16px;
+      padding: 8px 16px 12px;
       display: flex;
       gap: 8px;
       overflow-x: auto;
@@ -458,7 +461,9 @@
       position: sticky;
       top: 148px;
       /* Below header + tabs + search */
-      z-index: 65;
+      z-index: 80;
+      /* Increased */
+      box-shadow: 0 -2px 0 var(--bg), 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     /* When quick glance is visible, push filters down */
@@ -526,6 +531,9 @@
     /* ── Dance List ── */
     .dance-list {
       padding: 8px 12px 120px;
+      position: relative;
+      z-index: 10;
+      /* Lower than sticky elements */
     }
 
     .dance-list-empty {
@@ -744,7 +752,7 @@
       background: var(--accent);
       color: #fff;
       border: none;
-      box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       cursor: pointer;
       display: flex;
       align-items: center;
