@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NYCDA KC — Parent Tracker</title>
+<style>
+  :root {
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --accent: #e63946;
+    --accent-glow: rgba(230, 57, 70, 0.15);
+    --now-playing-bg: #1a1a2e;
+    --now-playing-text: #ffffff;
+    --favorite: #f59e0b;
+    --passed: 0.4;
+    --header-bg: #1a1a2e;
+    --chip-bg: #e5e7eb;
+    --chip-active: #1a1a2e;
+    --chip-active-text: #ffffff;
+    --border: #e5e7eb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --upcoming-bg: #fef3c7;
+    --upcoming-border: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--header-bg);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .header .subtitle {
+    font-size: 11px;
+    opacity: 0.7;
+    font-weight: 400;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .connection-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+  }
+  .connection-dot.offline { background: #ef4444; }
+
+  /* ── Now Playing Banner ── */
+  .now-playing {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: var(--now-playing-bg);
+    color: var(--now-playing-text);
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 3px solid var(--accent);
+  }
+  .now-playing-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .now-playing-entry {
+    font-size: 13px;
+    opacity: 0.6;
+    margin-bottom: 2px;
+  }
+  .now-playing-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .now-playing-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    opacity: 0.7;
+    flex-wrap: wrap;
+  }
+  .now-playing .studio-badge {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .now-playing-none {
+    font-size: 15px;
+    opacity: 0.6;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  /* ── Up Next Alert ── */
+  .up-next-alert {
+    background: var(--upcoming-bg);
+    border-left: 4px solid var(--upcoming-border);
+    padding: 10px 16px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #92400e;
+  }
+  .up-next-alert.visible { display: flex; }
+  .up-next-alert .alert-icon { font-size: 18px; flex-shrink: 0; }
+  .up-next-alert .alert-text { flex: 1; }
+  .up-next-alert .alert-count {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.8;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 80;
+  }
+  .now-playing ~ .tabs { top: auto; }
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* ── Search ── */
+  .search-bar {
+    padding: 10px 16px 6px;
+    background: var(--bg);
+  }
+  .search-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-wrapper {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+  }
+
+  /* ── Filter Chips ── */
+  .filters {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: var(--bg);
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    background: var(--chip-bg);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-chip.active {
+    background: var(--chip-active);
+    color: var(--chip-active-text);
+  }
+  .filter-chip:active { transform: scale(0.95); }
+
+  /* Filter dropdowns */
+  .filter-select {
+    flex-shrink: 0;
+    padding: 7px 28px 7px 12px;
+    border-radius: 20px;
+    background: var(--chip-bg);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .filter-select.active {
+    background-color: var(--chip-active);
+    color: var(--chip-active-text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  }
+
+  /* ── Dance List ── */
+  .dance-list {
+    padding: 8px 12px 120px;
+  }
+  .dance-list-empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text-secondary);
+    font-size: 15px;
+  }
+  .dance-list-empty .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* ── Dance Card ── */
+  .dance-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+    transition: opacity 0.3s, transform 0.15s;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .dance-card.passed { opacity: var(--passed); }
+  .dance-card.now-playing-card {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    opacity: 1;
+    box-shadow: var(--shadow-lg);
+  }
+  .dance-card.upcoming-fav {
+    border-color: var(--upcoming-border);
+    background: #fffbeb;
+  }
+  .dance-card:active { transform: scale(0.99); }
+
+  .entry-num {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+  .now-playing-card .entry-num {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .dance-info { flex: 1; min-width: 0; }
+  .dance-title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dance-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  .studio-badge {
+    display: inline-block;
+    background: var(--header-bg);
+    color: #fff;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .dance-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .dance-category {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .fav-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 22px;
+    color: #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    border-radius: 50%;
+  }
+  .fav-btn:active { transform: scale(1.2); }
+  .fav-btn.favorited { color: var(--favorite); }
+
+  /* ── Scroll to Now Playing FAB ── */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(230,57,70,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 70;
+    transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.9); }
+  .fab svg { width: 24px; height: 24px; }
+
+  /* ── Admin Bar ── */
+  .admin-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--header-bg);
+    color: #fff;
+    padding: 12px 16px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-btn {
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: 44px;
+  }
+  .admin-btn:active { transform: scale(0.95); }
+  .admin-btn.prev { background: #374151; color: #fff; }
+  .admin-btn.next { background: var(--accent); color: #fff; flex: 1; }
+  .admin-current {
+    text-align: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .admin-current strong { display: block; font-size: 18px; }
+  .admin-jump {
+    width: 60px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #4b5563;
+    background: #374151;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+  }
+  .admin-jump::placeholder { color: #9ca3af; }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 16px;
+    color: var(--text-secondary);
+    gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Utilities ── */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); border: 0;
+  }
+
+  /* Admin bottom padding */
+  body.admin-mode .dance-list { padding-bottom: 180px; }
+  body.admin-mode .fab { bottom: 84px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div>
+    <h1>NYCDA KC <span class="subtitle">Parent Tracker</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="connection-dot" id="connectionDot" title="Realtime connection"></div>
+  </div>
+</header>
+
+<!-- Now Playing Banner -->
+<div class="now-playing" id="nowPlaying" onclick="scrollToNowPlaying()">
+  <div class="now-playing-label">
+    <div class="live-dot"></div>
+    <span>Now on Stage</span>
+  </div>
+  <div id="nowPlayingContent">
+    <div class="now-playing-none">Competition has not started</div>
+  </div>
+</div>
+
+<!-- Up Next Alert -->
+<div class="up-next-alert" id="upNextAlert">
+  <span class="alert-icon">⭐</span>
+  <div>
+    <div class="alert-text" id="upNextText"></div>
+    <div class="alert-count" id="upNextCount"></div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="all" onclick="switchTab('all')">All Dances</button>
+  <button class="tab" data-tab="favorites" onclick="switchTab('favorites')">
+    My Dances <span class="badge" id="favCount" style="display:none">0</span>
+  </button>
+</div>
+
+<!-- Search -->
+<div class="search-bar">
+  <div class="search-wrapper">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="search-input" id="searchInput" type="text" placeholder="Search routines, studios..." autocomplete="off">
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters" id="filterBar">
+  <button class="filter-chip active" data-filter="day" data-value="all" onclick="setFilter('day','all',this)">Both Days</button>
+  <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">Day 1</button>
+  <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">Day 2</button>
+  <select class="filter-select" id="studioFilter" onchange="setStudioFilter(this)">
+    <option value="">All Studios</option>
+  </select>
+  <select class="filter-select" id="ageFilter" onchange="setSelectFilter('ageGroup', this)">
+    <option value="">All Ages</option>
+    <option value="Mini">Mini</option>
+    <option value="Junior">Junior</option>
+    <option value="Teen">Teen</option>
+    <option value="Senior">Senior</option>
+  </select>
+  <select class="filter-select" id="genreFilter" onchange="setSelectFilter('genre', this)">
+    <option value="">All Genres</option>
+  </select>
+  <select class="filter-select" id="typeFilter" onchange="setSelectFilter('type', this)">
+    <option value="">All Types</option>
+  </select>
+</div>
+
+<!-- Dance List -->
+<div class="dance-list" id="danceList">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>Loading schedule...</div>
+  </div>
+</div>
+
+<!-- Scroll to Now Playing FAB -->
+<button class="fab" id="fab" onclick="scrollToNowPlaying()" title="Jump to Now Playing">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/>
+  </svg>
+</button>
+
+<!-- Admin Bar -->
+<div class="admin-bar" id="adminBar">
+  <button class="admin-btn prev" onclick="advanceDance(-1)">◀ Prev</button>
+  <div class="admin-current">
+    <span style="font-size:10px;opacity:0.6">ENTRY</span>
+    <strong id="adminEntryNum">—</strong>
+  </div>
+  <input class="admin-jump" id="adminJump" type="text" placeholder="Go#" onkeydown="if(event.key==='Enter')jumpToEntry(this.value)">
+  <button class="admin-btn next" onclick="advanceDance(1)">Next ▶</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ─── Supabase Config ───
+  // TODO: Replace with your actual Supabase project URL and anon key
+  const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+
+  let supabase = null;
+  let realtimeChannel = null;
+
+  // ─── State ───
+  let SCHEDULE = [];
+  let currentEntryIndex = -1; // -1 = not started
+  let currentView = 'all';
+  let favorites = new Set(JSON.parse(localStorage.getItem('nycda_favorites') || '[]'));
+  let filters = { day: 'all', studioCode: '', ageGroup: '', genre: '', type: '' };
+  let searchQuery = '';
+  let isAdmin = new URLSearchParams(window.location.search).get('admin') === 'true';
+
+  // ─── Init ───
+  async function init() {
+    if (isAdmin) document.body.classList.add('admin-mode');
+
+    try {
+      const resp = await fetch('schedule.json');
+      const raw = await resp.json();
+      SCHEDULE = processSchedule(raw);
+      populateFilterOptions();
+      initSupabase();
+      renderSchedule();
+      updateFavCount();
+
+      if (isAdmin) {
+        document.getElementById('adminBar').classList.add('visible');
+      }
+    } catch (err) {
+      document.getElementById('danceList').innerHTML =
+        '<div class="loading" style="color:var(--accent)">Failed to load schedule. Please refresh.</div>';
+      console.error(err);
+    }
+  }
+
+  // ─── Process Schedule Data ───
+  function processSchedule(raw) {
+    let dayBoundaryFound = false;
+    return raw.map((entry, i) => {
+      // Parse numeric part of entry_id for day assignment
+      const numericId = parseInt(entry.entry_id, 10);
+
+      // Detect day boundary: time goes from PM to AM
+      if (i > 0 && !dayBoundaryFound) {
+        const prevTime = raw[i - 1].approx_time;
+        if (prevTime.includes('PM') && entry.approx_time.includes('AM')) {
+          dayBoundaryFound = true;
+        }
+      }
+      const day = dayBoundaryFound ? '2' : '1';
+
+      // Parse category: "Junior Musical Theatre Solo" → { ageGroup, genre, type }
+      const parsed = parseCategory(entry.category);
+
+      return {
+        ...entry,
+        index: i,
+        day,
+        ageGroup: parsed.ageGroup,
+        genre: parsed.genre,
+        type: parsed.type,
+      };
+    });
+  }
+
+  function parseCategory(cat) {
+    if (!cat) return { ageGroup: '', genre: '', type: '' };
+
+    const ageGroups = ['Mini', 'Junior', 'Teen', 'Senior'];
+    const types = [
+      'Large Production', 'Small Production', 'Extended Group', 'Extended Line',
+      'Duo/Trio', 'Group', 'Line', 'Solo'
+    ];
+
+    let ageGroup = '';
+    let type = '';
+    let genre = cat;
+
+    for (const ag of ageGroups) {
+      if (cat.startsWith(ag + ' ')) {
+        ageGroup = ag;
+        genre = cat.slice(ag.length + 1);
+        break;
+      }
+    }
+
+    for (const t of types) {
+      if (genre.endsWith(' ' + t)) {
+        type = t;
+        genre = genre.slice(0, -(t.length + 1));
+        break;
+      }
+    }
+
+    return { ageGroup, genre: genre.trim(), type };
+  }
+
+  // ─── Populate Filter Dropdowns ───
+  function populateFilterOptions() {
+    const studios = [...new Set(SCHEDULE.map(e => e.studio_code))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    const genres = [...new Set(SCHEDULE.map(e => e.genre).filter(Boolean))].sort();
+    const types = [...new Set(SCHEDULE.map(e => e.type).filter(Boolean))].sort();
+
+    const studioSelect = document.getElementById('studioFilter');
+    studios.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = 'Studio ' + s;
+      studioSelect.appendChild(opt);
+    });
+
+    const genreSelect = document.getElementById('genreFilter');
+    genres.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g;
+      opt.textContent = g;
+      genreSelect.appendChild(opt);
+    });
+
+    const typeSelect = document.getElementById('typeFilter');
+    types.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      typeSelect.appendChild(opt);
+    });
+  }
+
+  // ─── Supabase ───
+  function initSupabase() {
+    if (SUPABASE_URL.includes('YOUR_PROJECT')) {
+      console.warn('Supabase not configured — running in offline/demo mode.');
+      document.getElementById('connectionDot').classList.add('offline');
+      document.getElementById('connectionDot').title = 'Offline — Supabase not configured';
+      return;
+    }
+
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      fetchCurrentState();
+      subscribeRealtime();
+    } catch (err) {
+      console.error('Supabase init error:', err);
+      document.getElementById('connectionDot').classList.add('offline');
+    }
+  }
+
+  async function fetchCurrentState() {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('competition_state')
+        .select('current_entry_index')
+        .eq('id', 1)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setCurrentEntry(data.current_entry_index);
+      }
+    } catch (err) {
+      console.error('Fetch state error:', err);
+    }
+  }
+
+  function subscribeRealtime() {
+    if (!supabase) return;
+
+    realtimeChannel = supabase
+      .channel('competition_state_changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'competition_state', filter: 'id=eq.1' },
+        (payload) => {
+          const newIndex = payload.new.current_entry_index;
+          setCurrentEntry(newIndex);
+        }
+      )
+      .subscribe((status) => {
+        const dot = document.getElementById('connectionDot');
+        if (status === 'SUBSCRIBED') {
+          dot.classList.remove('offline');
+          dot.title = 'Connected — live updates';
+        } else {
+          dot.classList.add('offline');
+          dot.title = 'Reconnecting...';
+        }
+      });
+  }
+
+  function setCurrentEntry(index) {
+    currentEntryIndex = index;
+    updateNowPlaying();
+    updateUpNextAlert();
+    renderSchedule();
+    updateAdminDisplay();
+  }
+
+  async function advanceDance(direction) {
+    const newIndex = Math.max(-1, Math.min(SCHEDULE.length - 1, currentEntryIndex + direction));
+    if (newIndex === currentEntryIndex) return;
+
+    // Update locally immediately for responsiveness
+    setCurrentEntry(newIndex);
+
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from('competition_state')
+          .update({ current_entry_index: newIndex, updated_at: new Date().toISOString() })
+          .eq('id', 1);
+        if (error) console.error('Update error:', error);
+      } catch (err) {
+        console.error('Advance error:', err);
+      }
+    }
+  }
+
+  function jumpToEntry(val) {
+    val = val.trim();
+    if (!val) return;
+    const idx = SCHEDULE.findIndex(e => e.entry_id === val);
+    if (idx >= 0) {
+      const diff = idx - currentEntryIndex;
+      advanceDance(diff);
+      document.getElementById('adminJump').value = '';
+    } else {
+      document.getElementById('adminJump').style.borderColor = '#ef4444';
+      setTimeout(() => { document.getElementById('adminJump').style.borderColor = ''; }, 1000);
+    }
+  }
+
+  // ─── Now Playing Banner ───
+  function updateNowPlaying() {
+    const el = document.getElementById('nowPlayingContent');
+    if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) {
+      el.innerHTML = '<div class="now-playing-none">Competition has not started</div>';
+      return;
+    }
+
+    const dance = SCHEDULE[currentEntryIndex];
+    el.innerHTML = `
+      <div class="now-playing-entry">#${dance.entry_id} · ${dance.approx_time} · Day ${dance.day}</div>
+      <div class="now-playing-title">${escapeHtml(dance.routine_title)}</div>
+      <div class="now-playing-meta">
+        <span class="studio-badge">Studio ${escapeHtml(dance.studio_code)}</span>
+        <span>${escapeHtml(dance.category)}</span>
+      </div>
+    `;
+  }
+
+  // ─── Up Next Alert ───
+  function updateUpNextAlert() {
+    const alertEl = document.getElementById('upNextAlert');
+    const textEl = document.getElementById('upNextText');
+    const countEl = document.getElementById('upNextCount');
+
+    if (currentEntryIndex < 0 || favorites.size === 0) {
+      alertEl.classList.remove('visible');
+      return;
+    }
+
+    // Find favorited dances coming up within 5 entries
+    const upcoming = [];
+    for (let i = currentEntryIndex + 1; i <= Math.min(currentEntryIndex + 5, SCHEDULE.length - 1); i++) {
+      if (favorites.has(SCHEDULE[i].entry_id)) {
+        upcoming.push({ dance: SCHEDULE[i], distance: i - currentEntryIndex });
+      }
+    }
+
+    if (upcoming.length === 0) {
+      alertEl.classList.remove('visible');
+      return;
+    }
+
+    const next = upcoming[0];
+    const minEst = next.distance * 3;
+    textEl.textContent = `"${next.dance.routine_title}" is ${next.distance === 1 ? 'UP NEXT!' : `${next.distance} dances away (~${minEst} min)`}`;
+    countEl.textContent = upcoming.length > 1 ? `+${upcoming.length - 1} more starred dance${upcoming.length > 2 ? 's' : ''} coming up` : '';
+    alertEl.classList.add('visible');
+  }
+
+  // ─── Tabs ───
+  window.switchTab = function(tab) {
+    currentView = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    renderSchedule();
+  };
+
+  // ─── Filters ───
+  window.setFilter = function(type, value, btn) {
+    filters[type] = value;
+    // Update day chip UI
+    document.querySelectorAll(`[data-filter="${type}"]`).forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderSchedule();
+  };
+
+  window.setStudioFilter = function(select) {
+    filters.studioCode = select.value;
+    select.classList.toggle('active', !!select.value);
+    renderSchedule();
+  };
+
+  window.setSelectFilter = function(key, select) {
+    filters[key] = select.value;
+    select.classList.toggle('active', !!select.value);
+    renderSchedule();
+  };
+
+  // ─── Search ───
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    searchQuery = e.target.value.toLowerCase().trim();
+    renderSchedule();
+  });
+
+  // ─── Favorites ───
+  window.toggleFavorite = function(entryId, event) {
+    event.stopPropagation();
+    if (favorites.has(entryId)) {
+      favorites.delete(entryId);
+    } else {
+      favorites.add(entryId);
+    }
+    localStorage.setItem('nycda_favorites', JSON.stringify([...favorites]));
+    updateFavCount();
+    updateUpNextAlert();
+    renderSchedule();
+  };
+
+  function updateFavCount() {
+    const badge = document.getElementById('favCount');
+    if (favorites.size > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = favorites.size;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ─── Render ───
+  function renderSchedule() {
+    const container = document.getElementById('danceList');
+
+    let dances = SCHEDULE;
+
+    // Filter by tab
+    if (currentView === 'favorites') {
+      dances = dances.filter(d => favorites.has(d.entry_id));
+    }
+
+    // Apply filters
+    if (filters.day !== 'all') {
+      dances = dances.filter(d => d.day === filters.day);
+    }
+    if (filters.studioCode) {
+      dances = dances.filter(d => d.studio_code === filters.studioCode);
+    }
+    if (filters.ageGroup) {
+      dances = dances.filter(d => d.ageGroup === filters.ageGroup);
+    }
+    if (filters.genre) {
+      dances = dances.filter(d => d.genre === filters.genre);
+    }
+    if (filters.type) {
+      dances = dances.filter(d => d.type === filters.type);
+    }
+
+    // Search
+    if (searchQuery) {
+      dances = dances.filter(d =>
+        d.routine_title.toLowerCase().includes(searchQuery) ||
+        d.studio_code.toLowerCase().includes(searchQuery) ||
+        d.entry_id.toLowerCase().includes(searchQuery) ||
+        d.category.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    if (dances.length === 0) {
+      const msg = currentView === 'favorites'
+        ? '<div class="empty-icon">⭐</div>No favorites yet.<br>Tap the star on any dance to track it!'
+        : '<div class="empty-icon">🔍</div>No dances match your filters.';
+      container.innerHTML = `<div class="dance-list-empty">${msg}</div>`;
+      return;
+    }
+
+    // Build HTML using document fragment for performance
+    const fragment = document.createDocumentFragment();
+
+    for (const dance of dances) {
+      const isPassed = dance.index < currentEntryIndex;
+      const isNowPlaying = dance.index === currentEntryIndex;
+      const isFav = favorites.has(dance.entry_id);
+      const isUpcomingFav = isFav && dance.index > currentEntryIndex && dance.index <= currentEntryIndex + 5;
+
+      const card = document.createElement('div');
+      card.className = 'dance-card'
+        + (isPassed ? ' passed' : '')
+        + (isNowPlaying ? ' now-playing-card' : '')
+        + (isUpcomingFav ? ' upcoming-fav' : '');
+      card.id = 'dance-' + dance.entry_id;
+
+      card.innerHTML = `
+        <div class="entry-num">${escapeHtml(dance.entry_id)}</div>
+        <div class="dance-info">
+          <div class="dance-title">${escapeHtml(dance.routine_title)}</div>
+          <div class="dance-meta">
+            <span class="studio-badge">Studio ${escapeHtml(dance.studio_code)}</span>
+            <span class="dance-time">${dance.approx_time}</span>
+          </div>
+          <div class="dance-category">${escapeHtml(dance.category)}</div>
+        </div>
+        <button class="fav-btn ${isFav ? 'favorited' : ''}" onclick="toggleFavorite('${dance.entry_id}', event)" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
+          ${isFav ? '★' : '☆'}
+        </button>
+      `;
+
+      fragment.appendChild(card);
+    }
+
+    container.innerHTML = '';
+    container.appendChild(fragment);
+  }
+
+  // ─── Scroll to Now Playing ───
+  window.scrollToNowPlaying = function() {
+    if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) return;
+    const dance = SCHEDULE[currentEntryIndex];
+    const el = document.getElementById('dance-' + dance.entry_id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.transition = 'box-shadow 0.3s';
+      el.style.boxShadow = '0 0 0 3px var(--accent)';
+      setTimeout(() => { el.style.boxShadow = ''; }, 1500);
+    }
+  };
+
+  // ─── Admin Display ───
+  function updateAdminDisplay() {
+    if (!isAdmin) return;
+    const el = document.getElementById('adminEntryNum');
+    if (currentEntryIndex >= 0 && currentEntryIndex < SCHEDULE.length) {
+      el.textContent = SCHEDULE[currentEntryIndex].entry_id;
+    } else {
+      el.textContent = '—';
+    }
+  }
+
+  // Expose for admin bar inline handlers
+  window.advanceDance = advanceDance;
+  window.jumpToEntry = jumpToEntry;
+
+  // ─── Helpers ───
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── Start ───
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
