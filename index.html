@@ -196,37 +196,7 @@
       padding: 8px 0;
     }
 
-    /* ── Up Next Alert ── */
-    .up-next-alert {
-      background: var(--upcoming-bg);
-      border-left: 4px solid var(--upcoming-border);
-      padding: 10px 16px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #92400e;
-    }
 
-    .up-next-alert.visible {
-      display: flex;
-    }
-
-    .up-next-alert .alert-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .up-next-alert .alert-text {
-      flex: 1;
-    }
-
-    .up-next-alert .alert-count {
-      font-size: 12px;
-      font-weight: 400;
-      opacity: 0.8;
-    }
 
     /* ── Quick Glance Bar ── */
     .quick-glance {
@@ -234,8 +204,8 @@
       top: 52px;
       /* Right below header */
       z-index: 85;
-      background: linear-gradient(135deg, #FDF6EC 0%, #F5EDE3 100%);
-      border-bottom: 2px solid var(--favorite);
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
       padding: 0;
       display: none;
     }
@@ -279,7 +249,7 @@
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #8B7355;
+      color: var(--text-secondary);
       font-weight: 600;
       margin-bottom: 2px;
     }
@@ -287,7 +257,7 @@
     .quick-glance-title {
       font-size: 15px;
       font-weight: 700;
-      color: #5C4A3D;
+      color: var(--foreground);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -317,7 +287,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #8B7355;
+      color: var(--text-secondary);
       transition: transform 0.2s;
     }
 
@@ -960,15 +930,6 @@
     </div>
   </div>
 
-  <!-- Up Next Alert -->
-  <div class="up-next-alert" id="upNextAlert">
-    <span class="alert-icon">⭐</span>
-    <div>
-      <div class="alert-text" id="upNextText"></div>
-      <div class="alert-count" id="upNextCount"></div>
-    </div>
-  </div>
-
   <!-- Quick Glance Bar -->
   <div class="quick-glance" id="quickGlance">
     <div class="quick-glance-header" onclick="toggleQuickGlance()">
@@ -1294,7 +1255,6 @@
         }
 
         updateNowPlaying();
-        updateUpNextAlert();
         updateQuickGlance();
         renderSchedule();
         updateAdminDisplay();
@@ -1353,37 +1313,6 @@
         <span>${escapeHtml(dance.category)}</span>
       </div>
     `;
-      }
-
-      // ─── Up Next Alert ───
-      function updateUpNextAlert() {
-        const alertEl = document.getElementById('upNextAlert');
-        const textEl = document.getElementById('upNextText');
-        const countEl = document.getElementById('upNextCount');
-
-        if (currentEntryIndex < 0 || favorites.size === 0) {
-          alertEl.classList.remove('visible');
-          return;
-        }
-
-        // Find favorited dances coming up within 5 entries
-        const upcoming = [];
-        for (let i = currentEntryIndex + 1; i <= Math.min(currentEntryIndex + 5, SCHEDULE.length - 1); i++) {
-          if (favorites.has(SCHEDULE[i].entry_id)) {
-            upcoming.push({ dance: SCHEDULE[i], distance: i - currentEntryIndex });
-          }
-        }
-
-        if (upcoming.length === 0) {
-          alertEl.classList.remove('visible');
-          return;
-        }
-
-        const next = upcoming[0];
-        const minEst = next.distance * 3;
-        textEl.textContent = `"${next.dance.routine_title}" is ${next.distance === 1 ? 'UP NEXT!' : `${next.distance} dances away (~${minEst} min)`}`;
-        countEl.textContent = upcoming.length > 1 ? `+${upcoming.length - 1} more starred dance${upcoming.length > 2 ? 's' : ''} coming up` : '';
-        alertEl.classList.add('visible');
       }
 
       // ─── Quick Glance Bar ───
@@ -1539,7 +1468,6 @@
         }
         localStorage.setItem('nycda_favorites', JSON.stringify([...favorites]));
         updateFavCount();
-        updateUpNextAlert();
         updateQuickGlance();
         renderSchedule();
       };
