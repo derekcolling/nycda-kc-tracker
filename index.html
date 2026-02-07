@@ -1639,10 +1639,10 @@
 
       // ─── Scroll to Now Playing ───
       window.scrollToNowPlaying = function () {
-        if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) return;
-
-        // Reset everything so the current dance is actually visible and findable
+        // Always reset filters/search when this action is triggered
         window.resetAllFilters();
+
+        if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) return;
 
         const dance = SCHEDULE[currentEntryIndex];
         const el = document.getElementById('dance-' + dance.entry_id);
