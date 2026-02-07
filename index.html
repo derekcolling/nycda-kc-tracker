@@ -86,29 +86,7 @@
       gap: 8px;
     }
 
-    .live-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 12px;
-      color: #22c55e;
-      font-size: 11px;
-      font-weight: 700;
-      transition: all 0.3s;
-    }
 
-    .live-indicator.offline {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-    }
-
-    .live-indicator .live-text {
-      letter-spacing: 0.5px;
-    }
 
     /* ── Now Playing Banner ── */
     .now-playing {
@@ -507,28 +485,28 @@
       color: var(--chip-active-text);
     }
 
-    .filter-chip.is-live::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background: #22c55e;
-      border-radius: 50%;
-      margin-left: 8px;
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-      animation: pulse-live 2s infinite;
+    .filter-chip.is-live {
+      background: var(--now-playing-bg);
+      color: #fff;
+      position: relative;
     }
 
-    @keyframes pulse-live {
+    .filter-chip.is-live:not(.active) {
+      box-shadow: 0 0 0 2px var(--now-playing-bg);
+      animation: pulse-live-v2 2s infinite;
+    }
+
+    @keyframes pulse-live-v2 {
       0% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        box-shadow: 0 0 0 0 rgba(134, 167, 137, 0.7);
       }
 
       70% {
-        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+        box-shadow: 0 0 0 6px rgba(134, 167, 137, 0);
       }
 
       100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        box-shadow: 0 0 0 0 rgba(134, 167, 137, 0);
       }
     }
 
@@ -932,15 +910,6 @@
       <h1>NYCDA KC <span class="subtitle">Parent Tracker</span></h1>
     </div>
     <div class="header-right">
-      <div class="live-indicator" id="connectionDot" title="Realtime connection">
-        <span class="live-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m6 2c0-3.3-2.7-6-6-6s-6 2.7-6 6c0 2.2 1.2 4.1 3 5.2l1-1.7c-1.2-.7-2-2-2-3.4c0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-.8 2.8-2 3.4l1 1.7c1.8-1 3-3 3-5.2M12 2C6.5 2 2 6.5 2 12c0 3.7 2 6.9 5 8.6l1-1.7c-2.4-1.4-4-4-4-6.9c0-4.4 3.6-8 8-8s8 3.6 8 8c0 3-1.6 5.5-4 6.9l1 1.7c3-1.7 5-4.9 5-8.6c0-5.5-4.5-10-10-10" />
-          </svg>
-        </span>
-        <span class="live-text">LIVE</span>
-      </div>
     </div>
   </header>
 
@@ -1249,16 +1218,8 @@
             }
           )
           .subscribe((status) => {
-            const dot = document.getElementById('connectionDot');
-            const text = dot.querySelector('.live-text');
-            if (status === 'SUBSCRIBED') {
-              dot.classList.remove('offline');
-              dot.title = 'Connected — live updates';
-              text.textContent = 'LIVE';
-            } else {
-              dot.classList.add('offline');
-              dot.title = 'Reconnecting...';
-              text.textContent = 'OFFLINE';
+            if (status !== 'SUBSCRIBED') {
+              console.warn('Realtime connection issues:', status);
             }
           });
       }
