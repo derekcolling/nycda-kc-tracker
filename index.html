@@ -1,849 +1,1289 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NYCDA KC — Parent Tracker</title>
-<style>
-  :root {
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --text: #1a1a2e;
-    --text-secondary: #6b7280;
-    --accent: #e63946;
-    --accent-glow: rgba(230, 57, 70, 0.15);
-    --now-playing-bg: #1a1a2e;
-    --now-playing-text: #ffffff;
-    --favorite: #f59e0b;
-    --passed: 0.4;
-    --header-bg: #1a1a2e;
-    --chip-bg: #e5e7eb;
-    --chip-active: #1a1a2e;
-    --chip-active-text: #ffffff;
-    --border: #e5e7eb;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
-    --radius: 12px;
-    --radius-sm: 8px;
-    --upcoming-bg: #fef3c7;
-    --upcoming-border: #f59e0b;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>NYCDA KC — Parent Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Sophisticated pastel palette - muted, mature tones */
+      --bg: #F8F6F3;
+      --card: #ffffff;
+      --text: #3D3D3D;
+      --text-secondary: #6B6B6B;
+      --accent: #86A789;
+      --accent-glow: rgba(134, 167, 137, 0.15);
+      --now-playing-bg: #86A789;
+      --now-playing-text: #ffffff;
+      --favorite: #D4A574;
+      --passed: 0.4;
+      --header-bg: #5C6E5C;
+      --chip-bg: #EDE8E3;
+      --chip-active: #86A789;
+      --chip-active-text: #ffffff;
+      --border: #E5E0DB;
+      --shadow: 0 1px 3px rgba(61, 61, 61, 0.06);
+      --shadow-lg: 0 4px 12px rgba(61, 61, 61, 0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --upcoming-bg: #FDF6EC;
+      --upcoming-border: #D4A574;
+      /* Urgency colors - warm, muted tones */
+      --urgency-critical: #C17767;
+      --urgency-soon: #D4A574;
+      --urgency-normal: #B8C4A8;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden;
-  }
+    body {
+      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
 
-  /* ── Header ── */
-  .header {
-    background: var(--header-bg);
-    color: #fff;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 100;
-  }
-  .header h1 {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-  }
-  .header .subtitle {
-    font-size: 11px;
-    opacity: 0.7;
-    font-weight: 400;
-  }
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .connection-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    flex-shrink: 0;
-  }
-  .connection-dot.offline { background: #ef4444; }
+    /* ── Header ── */
+    .header {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  /* ── Now Playing Banner ── */
-  .now-playing {
-    position: sticky;
-    top: 0;
-    z-index: 90;
-    background: var(--now-playing-bg);
-    color: var(--now-playing-text);
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 3px solid var(--accent);
-  }
-  .now-playing-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    opacity: 0.8;
-  }
-  .live-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.3); }
-  }
-  .now-playing-entry {
-    font-size: 13px;
-    opacity: 0.6;
-    margin-bottom: 2px;
-  }
-  .now-playing-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .now-playing-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    opacity: 0.7;
-    flex-wrap: wrap;
-  }
-  .now-playing .studio-badge {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-  }
-  .now-playing-none {
-    font-size: 15px;
-    opacity: 0.6;
-    text-align: center;
-    padding: 8px 0;
-  }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
 
-  /* ── Up Next Alert ── */
-  .up-next-alert {
-    background: var(--upcoming-bg);
-    border-left: 4px solid var(--upcoming-border);
-    padding: 10px 16px;
-    display: none;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #92400e;
-  }
-  .up-next-alert.visible { display: flex; }
-  .up-next-alert .alert-icon { font-size: 18px; flex-shrink: 0; }
-  .up-next-alert .alert-text { flex: 1; }
-  .up-next-alert .alert-count {
-    font-size: 12px;
-    font-weight: 400;
-    opacity: 0.8;
-  }
+    .header .subtitle {
+      font-size: 11px;
+      opacity: 0.7;
+      font-weight: 400;
+    }
 
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 80;
-  }
-  .now-playing ~ .tabs { top: auto; }
-  .tab {
-    flex: 1;
-    padding: 12px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-  .tab .badge {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    margin-left: 4px;
-    vertical-align: middle;
-  }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  /* ── Search ── */
-  .search-bar {
-    padding: 10px 16px 6px;
-    background: var(--bg);
-  }
-  .search-input {
-    width: 100%;
-    padding: 10px 14px 10px 38px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 15px;
-    background: var(--card);
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .search-input:focus { border-color: var(--accent); }
-  .search-wrapper {
-    position: relative;
-  }
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    pointer-events: none;
-  }
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
 
-  /* ── Filter Chips ── */
-  .filters {
-    padding: 8px 16px;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    background: var(--bg);
-  }
-  .filters::-webkit-scrollbar { display: none; }
-  .filter-chip {
-    flex-shrink: 0;
-    padding: 7px 14px;
-    border-radius: 20px;
-    background: var(--chip-bg);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .filter-chip.active {
-    background: var(--chip-active);
-    color: var(--chip-active-text);
-  }
-  .filter-chip:active { transform: scale(0.95); }
+    .connection-dot.offline {
+      background: #ef4444;
+    }
 
-  /* Filter dropdowns */
-  .filter-select {
-    flex-shrink: 0;
-    padding: 7px 28px 7px 12px;
-    border-radius: 20px;
-    background: var(--chip-bg);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-  }
-  .filter-select.active {
-    background-color: var(--chip-active);
-    color: var(--chip-active-text);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-  }
+    /* ── Now Playing Banner ── */
+    .now-playing {
+      position: sticky;
+      top: 52px;
+      /* Below header */
+      z-index: 90;
+      background: var(--now-playing-bg);
+      color: var(--now-playing-text);
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 3px solid var(--accent);
+      display: none;
+      /* Hidden - we auto-scroll to current dance instead */
+    }
 
-  /* ── Dance List ── */
-  .dance-list {
-    padding: 8px 12px 120px;
-  }
-  .dance-list-empty {
-    text-align: center;
-    padding: 48px 16px;
-    color: var(--text-secondary);
-    font-size: 15px;
-  }
-  .dance-list-empty .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .now-playing-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
 
-  /* ── Dance Card ── */
-  .dance-card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 12px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: var(--shadow);
-    transition: opacity 0.3s, transform 0.15s;
-    border: 2px solid transparent;
-    position: relative;
-  }
-  .dance-card.passed { opacity: var(--passed); }
-  .dance-card.now-playing-card {
-    border-color: var(--accent);
-    background: var(--accent-glow);
-    opacity: 1;
-    box-shadow: var(--shadow-lg);
-  }
-  .dance-card.upcoming-fav {
-    border-color: var(--upcoming-border);
-    background: #fffbeb;
-  }
-  .dance-card:active { transform: scale(0.99); }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
 
-  .entry-num {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-    flex-shrink: 0;
-    color: var(--text);
-  }
-  .now-playing-card .entry-num {
-    background: var(--accent);
-    color: #fff;
-  }
+    @keyframes pulse {
 
-  .dance-info { flex: 1; min-width: 0; }
-  .dance-title {
-    font-size: 15px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .dance-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 3px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    flex-wrap: wrap;
-  }
-  .studio-badge {
-    display: inline-block;
-    background: var(--header-bg);
-    color: #fff;
-    padding: 1px 7px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .dance-time {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  .dance-category {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-  }
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
 
-  .fav-btn {
-    width: 44px;
-    height: 44px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 22px;
-    color: #d1d5db;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-    border-radius: 50%;
-  }
-  .fav-btn:active { transform: scale(1.2); }
-  .fav-btn.favorited { color: var(--favorite); }
+      50% {
+        opacity: 0.5;
+        transform: scale(1.3);
+      }
+    }
 
-  /* ── Scroll to Now Playing FAB ── */
-  .fab {
-    position: fixed;
-    bottom: 24px;
-    right: 16px;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(230,57,70,0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 70;
-    transition: transform 0.2s;
-  }
-  .fab:active { transform: scale(0.9); }
-  .fab svg { width: 24px; height: 24px; }
+    .now-playing-entry {
+      font-size: 13px;
+      opacity: 0.6;
+      margin-bottom: 2px;
+    }
 
-  /* ── Admin Bar ── */
-  .admin-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--header-bg);
-    color: #fff;
-    padding: 12px 16px;
-    display: none;
-    align-items: center;
-    gap: 10px;
-    z-index: 100;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
-  }
-  .admin-bar.visible { display: flex; }
-  .admin-btn {
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    border: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    min-height: 44px;
-  }
-  .admin-btn:active { transform: scale(0.95); }
-  .admin-btn.prev { background: #374151; color: #fff; }
-  .admin-btn.next { background: var(--accent); color: #fff; flex: 1; }
-  .admin-current {
-    text-align: center;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .admin-current strong { display: block; font-size: 18px; }
-  .admin-jump {
-    width: 60px;
-    padding: 8px;
-    border-radius: var(--radius-sm);
-    border: 1px solid #4b5563;
-    background: #374151;
-    color: #fff;
-    font-size: 14px;
-    text-align: center;
-  }
-  .admin-jump::placeholder { color: #9ca3af; }
+    .now-playing-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
 
-  /* ── Loading ── */
-  .loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 16px;
-    color: var(--text-secondary);
-    gap: 16px;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    .now-playing-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: 0.7;
+      flex-wrap: wrap;
+    }
 
-  /* ── Utilities ── */
-  .sr-only {
-    position: absolute; width: 1px; height: 1px;
-    padding: 0; margin: -1px; overflow: hidden;
-    clip: rect(0,0,0,0); border: 0;
-  }
+    .now-playing .studio-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
 
-  /* Admin bottom padding */
-  body.admin-mode .dance-list { padding-bottom: 180px; }
-  body.admin-mode .fab { bottom: 84px; }
-</style>
+    .now-playing-none {
+      font-size: 15px;
+      opacity: 0.6;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    /* ── Up Next Alert ── */
+    .up-next-alert {
+      background: var(--upcoming-bg);
+      border-left: 4px solid var(--upcoming-border);
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #92400e;
+    }
+
+    .up-next-alert.visible {
+      display: flex;
+    }
+
+    .up-next-alert .alert-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .up-next-alert .alert-text {
+      flex: 1;
+    }
+
+    .up-next-alert .alert-count {
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    /* ── Quick Glance Bar ── */
+    .quick-glance {
+      position: sticky;
+      top: 52px;
+      /* Right below header */
+      z-index: 85;
+      background: linear-gradient(135deg, #FDF6EC 0%, #F5EDE3 100%);
+      border-bottom: 2px solid var(--favorite);
+      padding: 0;
+      display: none;
+    }
+
+    .quick-glance.visible {
+      display: block;
+    }
+
+    .quick-glance-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      gap: 12px;
+    }
+
+    .quick-glance-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--favorite);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .quick-glance-icon svg {
+      width: 18px;
+      height: 18px;
+      color: #fff;
+    }
+
+    .quick-glance-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .quick-glance-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8B7355;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .quick-glance-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #5C4A3D;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .quick-glance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--favorite);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .quick-glance-badge .time {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    .quick-glance-expand {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8B7355;
+      transition: transform 0.2s;
+    }
+
+    .quick-glance.expanded .quick-glance-expand {
+      transform: rotate(180deg);
+    }
+
+    .quick-glance-list {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      background: #FAF7F2;
+    }
+
+    .quick-glance.expanded .quick-glance-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .quick-glance-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      gap: 12px;
+      border-top: 1px solid #E5DED5;
+      cursor: pointer;
+    }
+
+    .quick-glance-item:active {
+      background: #F0E8DD;
+    }
+
+    .quick-glance-item-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5C4A3D;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .quick-glance-item-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: #8B7355;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 52px;
+      /* Below header, will be pushed down by now-playing if visible */
+      z-index: 80;
+    }
+
+    /* When quick glance is visible, push tabs down */
+    body.quick-glance-active .tabs {
+      top: 108px;
+      /* 52px header + 56px quick-glance */
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    /* ── Search ── */
+    .search-bar {
+      padding: 10px 16px 6px;
+      background: var(--bg);
+      position: sticky;
+      top: 96px;
+      /* Below header + tabs */
+      z-index: 70;
+    }
+
+    /* When quick glance is visible, push search bar down */
+    body.quick-glance-active .search-bar {
+      top: 152px;
+      /* 52px header + 56px quick-glance + 44px tabs */
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    /* ── Filter Chips ── */
+    .filters {
+      padding: 8px 16px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      background: var(--bg);
+      position: sticky;
+      top: 148px;
+      /* Below header + tabs + search */
+      z-index: 65;
+    }
+
+    /* When quick glance is visible, push filters down */
+    body.quick-glance-active .filters {
+      top: 204px;
+      /* 52px header + 56px quick-glance + 44px tabs + 52px search */
+    }
+
+    .filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      min-height: 44px;
+      border-radius: 22px;
+      background: var(--chip-bg);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-chip.active {
+      background: var(--chip-active);
+      color: var(--chip-active-text);
+    }
+
+    .filter-chip:active {
+      transform: scale(0.95);
+    }
+
+    /* Filter dropdowns */
+    .filter-select {
+      flex-shrink: 0;
+      padding: 10px 32px 10px 14px;
+      min-height: 44px;
+      border-radius: 22px;
+      background: var(--chip-bg);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .filter-select.active {
+      background-color: var(--chip-active);
+      color: var(--chip-active-text);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    }
+
+    /* ── Dance List ── */
+    .dance-list {
+      padding: 8px 12px 120px;
+    }
+
+    .dance-list-empty {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .dance-list-empty .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Dance Card ── */
+    .dance-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      transition: opacity 0.3s, transform 0.15s;
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    .dance-card.passed {
+      opacity: var(--passed);
+    }
+
+    .dance-card.now-playing-card {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      opacity: 1;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .dance-card.upcoming-fav {
+      border-color: var(--upcoming-border);
+      background: #fffbeb;
+    }
+
+    .dance-card:active {
+      transform: scale(0.99);
+    }
+
+    .entry-num {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .now-playing-card .entry-num {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .dance-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dance-title {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dance-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .studio-badge {
+      display: inline-block;
+      background: var(--header-bg);
+      color: #fff;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .dance-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .dance-category {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ── Countdown Badge ── */
+    .countdown-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .countdown-badge .wait-time {
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+
+    .countdown-badge.up-next {
+      background: var(--accent);
+      color: #fff;
+      animation: pulse-badge 1.5s ease-in-out infinite;
+      font-size: 13px;
+      padding: 6px 14px;
+    }
+
+    .countdown-badge.urgent {
+      background: #FDF6EC;
+      color: var(--urgency-critical);
+      border: 2px solid var(--urgency-critical);
+    }
+
+    .countdown-badge.soon {
+      background: #FDF6EC;
+      color: var(--urgency-soon);
+      border: 1px solid var(--urgency-soon);
+    }
+
+    .countdown-badge.away {
+      background: var(--upcoming-bg);
+      color: #6B6B6B;
+      border: 1px solid var(--upcoming-border);
+    }
+
+    @keyframes pulse-badge {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    /* Accessibility: reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      .countdown-badge.up-next {
+        animation: none;
+      }
+
+      * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    .fav-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: #d1d5db;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      border-radius: 50%;
+    }
+
+    .fav-btn:active {
+      transform: scale(1.2);
+    }
+
+    .fav-btn.favorited {
+      color: var(--favorite);
+    }
+
+    /* ── Scroll to Now Playing FAB ── */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 70;
+      transition: transform 0.2s;
+    }
+
+    .fab:active {
+      transform: scale(0.9);
+    }
+
+    .fab svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ── Admin Bar ── */
+    .admin-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--header-bg);
+      color: #fff;
+      padding: 12px 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .admin-bar.visible {
+      display: flex;
+    }
+
+    .admin-btn {
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+    }
+
+    .admin-btn:active {
+      transform: scale(0.95);
+    }
+
+    .admin-btn.prev {
+      background: #374151;
+      color: #fff;
+    }
+
+    .admin-btn.next {
+      background: var(--accent);
+      color: #fff;
+      flex: 1;
+    }
+
+    .admin-current {
+      text-align: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .admin-current strong {
+      display: block;
+      font-size: 18px;
+    }
+
+    .admin-jump {
+      width: 60px;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #4b5563;
+      background: #374151;
+      color: #fff;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .admin-jump::placeholder {
+      color: #9ca3af;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 16px;
+      color: var(--text-secondary);
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Utilities ── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    /* Admin bottom padding */
+    body.admin-mode .dance-list {
+      padding-bottom: 180px;
+    }
+
+    body.admin-mode .fab {
+      bottom: 84px;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- Header -->
-<header class="header">
-  <div>
-    <h1>NYCDA KC <span class="subtitle">Parent Tracker</span></h1>
-  </div>
-  <div class="header-right">
-    <div class="connection-dot" id="connectionDot" title="Realtime connection"></div>
-  </div>
-</header>
+  <!-- Header -->
+  <header class="header">
+    <div>
+      <h1>NYCDA KC <span class="subtitle">Parent Tracker</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="connection-dot" id="connectionDot" title="Realtime connection"></div>
+    </div>
+  </header>
 
-<!-- Now Playing Banner -->
-<div class="now-playing" id="nowPlaying" onclick="scrollToNowPlaying()">
-  <div class="now-playing-label">
-    <div class="live-dot"></div>
-    <span>Now on Stage</span>
+  <!-- Now Playing Banner -->
+  <div class="now-playing" id="nowPlaying" onclick="scrollToNowPlaying()">
+    <div class="now-playing-label">
+      <div class="live-dot"></div>
+      <span>Now on Stage</span>
+    </div>
+    <div id="nowPlayingContent">
+      <div class="now-playing-none">Competition has not started</div>
+    </div>
   </div>
-  <div id="nowPlayingContent">
-    <div class="now-playing-none">Competition has not started</div>
+
+  <!-- Up Next Alert -->
+  <div class="up-next-alert" id="upNextAlert">
+    <span class="alert-icon">⭐</span>
+    <div>
+      <div class="alert-text" id="upNextText"></div>
+      <div class="alert-count" id="upNextCount"></div>
+    </div>
   </div>
-</div>
 
-<!-- Up Next Alert -->
-<div class="up-next-alert" id="upNextAlert">
-  <span class="alert-icon">⭐</span>
-  <div>
-    <div class="alert-text" id="upNextText"></div>
-    <div class="alert-count" id="upNextCount"></div>
+  <!-- Quick Glance Bar -->
+  <div class="quick-glance" id="quickGlance">
+    <div class="quick-glance-header" onclick="toggleQuickGlance()">
+      <div class="quick-glance-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+            clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="quick-glance-content">
+        <div class="quick-glance-label">Your Next Dance</div>
+        <div class="quick-glance-title" id="quickGlanceTitle">Loading...</div>
+      </div>
+      <div class="quick-glance-badge" id="quickGlanceBadge">
+        <span id="quickGlanceAway">--</span>
+        <span class="time" id="quickGlanceTime"></span>
+      </div>
+      <div class="quick-glance-expand">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </div>
+    </div>
+    <div class="quick-glance-list" id="quickGlanceList"></div>
   </div>
-</div>
 
-<!-- Tabs -->
-<div class="tabs">
-  <button class="tab active" data-tab="all" onclick="switchTab('all')">All Dances</button>
-  <button class="tab" data-tab="favorites" onclick="switchTab('favorites')">
-    My Dances <span class="badge" id="favCount" style="display:none">0</span>
-  </button>
-</div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="all" onclick="switchTab('all')">All Dances</button>
+    <button class="tab" data-tab="favorites" onclick="switchTab('favorites')">
+      My Dances <span class="badge" id="favCount" style="display:none">0</span>
+    </button>
+  </div>
 
-<!-- Search -->
-<div class="search-bar">
-  <div class="search-wrapper">
-    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+  <!-- Search -->
+  <div class="search-bar">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search routines, studios..."
+        autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters" id="filterBar">
+    <button class="filter-chip active" data-filter="day" data-value="all" onclick="setFilter('day','all',this)">Both
+      Days</button>
+    <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">Day 1</button>
+    <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">Day 2</button>
+    <select class="filter-select" id="studioFilter" onchange="setStudioFilter(this)">
+      <option value="">All Studios</option>
+    </select>
+    <select class="filter-select" id="ageFilter" onchange="setSelectFilter('ageGroup', this)">
+      <option value="">All Ages</option>
+      <option value="Mini">Mini</option>
+      <option value="Junior">Junior</option>
+      <option value="Teen">Teen</option>
+      <option value="Senior">Senior</option>
+    </select>
+    <select class="filter-select" id="genreFilter" onchange="setSelectFilter('genre', this)">
+      <option value="">All Genres</option>
+    </select>
+    <select class="filter-select" id="typeFilter" onchange="setSelectFilter('type', this)">
+      <option value="">All Types</option>
+    </select>
+  </div>
+
+  <!-- Dance List -->
+  <div class="dance-list" id="danceList">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Loading schedule...</div>
+    </div>
+  </div>
+
+  <!-- Scroll to Now Playing FAB -->
+  <button class="fab" id="fab" onclick="scrollToNowPlaying()" title="Jump to Now Playing">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+      stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none" />
     </svg>
-    <input class="search-input" id="searchInput" type="text" placeholder="Search routines, studios..." autocomplete="off">
+  </button>
+
+  <!-- Admin Bar -->
+  <div class="admin-bar" id="adminBar">
+    <button class="admin-btn prev" onclick="advanceDance(-1)">◀ Prev</button>
+    <div class="admin-current">
+      <span style="font-size:10px;opacity:0.6">ENTRY</span>
+      <strong id="adminEntryNum">—</strong>
+    </div>
+    <input class="admin-jump" id="adminJump" type="text" placeholder="Go#"
+      onkeydown="if(event.key==='Enter')jumpToEntry(this.value)">
+    <button class="admin-btn next" onclick="advanceDance(1)">Next ▶</button>
   </div>
-</div>
 
-<!-- Filters -->
-<div class="filters" id="filterBar">
-  <button class="filter-chip active" data-filter="day" data-value="all" onclick="setFilter('day','all',this)">Both Days</button>
-  <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">Day 1</button>
-  <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">Day 2</button>
-  <select class="filter-select" id="studioFilter" onchange="setStudioFilter(this)">
-    <option value="">All Studios</option>
-  </select>
-  <select class="filter-select" id="ageFilter" onchange="setSelectFilter('ageGroup', this)">
-    <option value="">All Ages</option>
-    <option value="Mini">Mini</option>
-    <option value="Junior">Junior</option>
-    <option value="Teen">Teen</option>
-    <option value="Senior">Senior</option>
-  </select>
-  <select class="filter-select" id="genreFilter" onchange="setSelectFilter('genre', this)">
-    <option value="">All Genres</option>
-  </select>
-  <select class="filter-select" id="typeFilter" onchange="setSelectFilter('type', this)">
-    <option value="">All Types</option>
-  </select>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      'use strict';
 
-<!-- Dance List -->
-<div class="dance-list" id="danceList">
-  <div class="loading">
-    <div class="spinner"></div>
-    <div>Loading schedule...</div>
-  </div>
-</div>
+      // ─── Supabase Config ───
+      // TODO: Replace with your actual Supabase project URL and anon key
+      const SUPABASE_URL = 'https://uuqfcrbsqeagjzmrgzfe.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1cWZjcmJzcWVhZ2p6bXJnemZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODU5MjEsImV4cCI6MjA4NjA2MTkyMX0.CeRgd12inqQJaFmCgPfnOb028-3C5nJ2mkgS2RmHesE';
 
-<!-- Scroll to Now Playing FAB -->
-<button class="fab" id="fab" onclick="scrollToNowPlaying()" title="Jump to Now Playing">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/>
-  </svg>
-</button>
+      let supabase = null;
+      let realtimeChannel = null;
 
-<!-- Admin Bar -->
-<div class="admin-bar" id="adminBar">
-  <button class="admin-btn prev" onclick="advanceDance(-1)">◀ Prev</button>
-  <div class="admin-current">
-    <span style="font-size:10px;opacity:0.6">ENTRY</span>
-    <strong id="adminEntryNum">—</strong>
-  </div>
-  <input class="admin-jump" id="adminJump" type="text" placeholder="Go#" onkeydown="if(event.key==='Enter')jumpToEntry(this.value)">
-  <button class="admin-btn next" onclick="advanceDance(1)">Next ▶</button>
-</div>
+      // ─── State ───
+      let SCHEDULE = [];
+      let currentEntryIndex = -1; // -1 = not started
+      let currentView = 'all';
+      let favorites = new Set(JSON.parse(localStorage.getItem('nycda_favorites') || '[]'));
+      let filters = { day: 'all', studioCode: '', ageGroup: '', genre: '', type: '' };
+      let searchQuery = '';
+      let isAdmin = new URLSearchParams(window.location.search).get('admin') === 'true';
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(function() {
-  'use strict';
+      // ─── Init ───
+      async function init() {
+        if (isAdmin) document.body.classList.add('admin-mode');
 
-  // ─── Supabase Config ───
-  // TODO: Replace with your actual Supabase project URL and anon key
-  const SUPABASE_URL = 'https://uuqfcrbsqeagjzmrgzfe.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1cWZjcmJzcWVhZ2p6bXJnemZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODU5MjEsImV4cCI6MjA4NjA2MTkyMX0.CeRgd12inqQJaFmCgPfnOb028-3C5nJ2mkgS2RmHesE';
+        try {
+          const resp = await fetch('schedule.json');
+          const raw = await resp.json();
+          SCHEDULE = processSchedule(raw);
+          populateFilterOptions();
+          initSupabase();
+          renderSchedule();
+          updateFavCount();
 
-  let supabase = null;
-  let realtimeChannel = null;
-
-  // ─── State ───
-  let SCHEDULE = [];
-  let currentEntryIndex = -1; // -1 = not started
-  let currentView = 'all';
-  let favorites = new Set(JSON.parse(localStorage.getItem('nycda_favorites') || '[]'));
-  let filters = { day: 'all', studioCode: '', ageGroup: '', genre: '', type: '' };
-  let searchQuery = '';
-  let isAdmin = new URLSearchParams(window.location.search).get('admin') === 'true';
-
-  // ─── Init ───
-  async function init() {
-    if (isAdmin) document.body.classList.add('admin-mode');
-
-    try {
-      const resp = await fetch('schedule.json');
-      const raw = await resp.json();
-      SCHEDULE = processSchedule(raw);
-      populateFilterOptions();
-      initSupabase();
-      renderSchedule();
-      updateFavCount();
-
-      if (isAdmin) {
-        document.getElementById('adminBar').classList.add('visible');
-      }
-    } catch (err) {
-      document.getElementById('danceList').innerHTML =
-        '<div class="loading" style="color:var(--accent)">Failed to load schedule. Please refresh.</div>';
-      console.error(err);
-    }
-  }
-
-  // ─── Process Schedule Data ───
-  function processSchedule(raw) {
-    let dayBoundaryFound = false;
-    return raw.map((entry, i) => {
-      // Parse numeric part of entry_id for day assignment
-      const numericId = parseInt(entry.entry_id, 10);
-
-      // Detect day boundary: time goes from PM to AM
-      if (i > 0 && !dayBoundaryFound) {
-        const prevTime = raw[i - 1].approx_time;
-        if (prevTime.includes('PM') && entry.approx_time.includes('AM')) {
-          dayBoundaryFound = true;
+          if (isAdmin) {
+            document.getElementById('adminBar').classList.add('visible');
+          }
+        } catch (err) {
+          document.getElementById('danceList').innerHTML =
+            '<div class="loading" style="color:var(--accent)">Failed to load schedule. Please refresh.</div>';
+          console.error(err);
         }
       }
-      const day = dayBoundaryFound ? '2' : '1';
 
-      // Parse category: "Junior Musical Theatre Solo" → { ageGroup, genre, type }
-      const parsed = parseCategory(entry.category);
+      // ─── Process Schedule Data ───
+      function processSchedule(raw) {
+        let dayBoundaryFound = false;
+        return raw.map((entry, i) => {
+          // Parse numeric part of entry_id for day assignment
+          const numericId = parseInt(entry.entry_id, 10);
 
-      return {
-        ...entry,
-        index: i,
-        day,
-        ageGroup: parsed.ageGroup,
-        genre: parsed.genre,
-        type: parsed.type,
-      };
-    });
-  }
+          // Detect day boundary: time goes from PM to AM
+          if (i > 0 && !dayBoundaryFound) {
+            const prevTime = raw[i - 1].approx_time;
+            if (prevTime.includes('PM') && entry.approx_time.includes('AM')) {
+              dayBoundaryFound = true;
+            }
+          }
+          const day = dayBoundaryFound ? '2' : '1';
 
-  function parseCategory(cat) {
-    if (!cat) return { ageGroup: '', genre: '', type: '' };
+          // Parse category: "Junior Musical Theatre Solo" → { ageGroup, genre, type }
+          const parsed = parseCategory(entry.category);
 
-    const ageGroups = ['Mini', 'Junior', 'Teen', 'Senior'];
-    const types = [
-      'Large Production', 'Small Production', 'Extended Group', 'Extended Line',
-      'Duo/Trio', 'Group', 'Line', 'Solo'
-    ];
-
-    let ageGroup = '';
-    let type = '';
-    let genre = cat;
-
-    for (const ag of ageGroups) {
-      if (cat.startsWith(ag + ' ')) {
-        ageGroup = ag;
-        genre = cat.slice(ag.length + 1);
-        break;
+          return {
+            ...entry,
+            index: i,
+            day,
+            ageGroup: parsed.ageGroup,
+            genre: parsed.genre,
+            type: parsed.type,
+          };
+        });
       }
-    }
 
-    for (const t of types) {
-      if (genre.endsWith(' ' + t)) {
-        type = t;
-        genre = genre.slice(0, -(t.length + 1));
-        break;
-      }
-    }
+      function parseCategory(cat) {
+        if (!cat) return { ageGroup: '', genre: '', type: '' };
 
-    return { ageGroup, genre: genre.trim(), type };
-  }
+        const ageGroups = ['Mini', 'Junior', 'Teen', 'Senior'];
+        const types = [
+          'Large Production', 'Small Production', 'Extended Group', 'Extended Line',
+          'Duo/Trio', 'Group', 'Line', 'Solo'
+        ];
 
-  // ─── Populate Filter Dropdowns ───
-  function populateFilterOptions() {
-    const studios = [...new Set(SCHEDULE.map(e => e.studio_code))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    const genres = [...new Set(SCHEDULE.map(e => e.genre).filter(Boolean))].sort();
-    const types = [...new Set(SCHEDULE.map(e => e.type).filter(Boolean))].sort();
+        let ageGroup = '';
+        let type = '';
+        let genre = cat;
 
-    const studioSelect = document.getElementById('studioFilter');
-    studios.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = 'Studio ' + s;
-      studioSelect.appendChild(opt);
-    });
-
-    const genreSelect = document.getElementById('genreFilter');
-    genres.forEach(g => {
-      const opt = document.createElement('option');
-      opt.value = g;
-      opt.textContent = g;
-      genreSelect.appendChild(opt);
-    });
-
-    const typeSelect = document.getElementById('typeFilter');
-    types.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t;
-      opt.textContent = t;
-      typeSelect.appendChild(opt);
-    });
-  }
-
-  // ─── Supabase ───
-  function initSupabase() {
-    if (SUPABASE_URL.includes('YOUR_PROJECT')) {
-      console.warn('Supabase not configured — running in offline/demo mode.');
-      document.getElementById('connectionDot').classList.add('offline');
-      document.getElementById('connectionDot').title = 'Offline — Supabase not configured';
-      return;
-    }
-
-    try {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      fetchCurrentState();
-      subscribeRealtime();
-    } catch (err) {
-      console.error('Supabase init error:', err);
-      document.getElementById('connectionDot').classList.add('offline');
-    }
-  }
-
-  async function fetchCurrentState() {
-    if (!supabase) return;
-    try {
-      const { data, error } = await supabase
-        .from('competition_state')
-        .select('current_entry_index')
-        .eq('id', 1)
-        .single();
-
-      if (error) throw error;
-      if (data) {
-        setCurrentEntry(data.current_entry_index);
-      }
-    } catch (err) {
-      console.error('Fetch state error:', err);
-    }
-  }
-
-  function subscribeRealtime() {
-    if (!supabase) return;
-
-    realtimeChannel = supabase
-      .channel('competition_state_changes')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'competition_state', filter: 'id=eq.1' },
-        (payload) => {
-          const newIndex = payload.new.current_entry_index;
-          setCurrentEntry(newIndex);
+        for (const ag of ageGroups) {
+          if (cat.startsWith(ag + ' ')) {
+            ageGroup = ag;
+            genre = cat.slice(ag.length + 1);
+            break;
+          }
         }
-      )
-      .subscribe((status) => {
-        const dot = document.getElementById('connectionDot');
-        if (status === 'SUBSCRIBED') {
-          dot.classList.remove('offline');
-          dot.title = 'Connected — live updates';
+
+        for (const t of types) {
+          if (genre.endsWith(' ' + t)) {
+            type = t;
+            genre = genre.slice(0, -(t.length + 1));
+            break;
+          }
+        }
+
+        return { ageGroup, genre: genre.trim(), type };
+      }
+
+      // ─── Populate Filter Dropdowns ───
+      function populateFilterOptions() {
+        const studios = [...new Set(SCHEDULE.map(e => e.studio_code))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        const genres = [...new Set(SCHEDULE.map(e => e.genre).filter(Boolean))].sort();
+        const types = [...new Set(SCHEDULE.map(e => e.type).filter(Boolean))].sort();
+
+        const studioSelect = document.getElementById('studioFilter');
+        studios.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = 'Studio ' + s;
+          studioSelect.appendChild(opt);
+        });
+
+        const genreSelect = document.getElementById('genreFilter');
+        genres.forEach(g => {
+          const opt = document.createElement('option');
+          opt.value = g;
+          opt.textContent = g;
+          genreSelect.appendChild(opt);
+        });
+
+        const typeSelect = document.getElementById('typeFilter');
+        types.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+      }
+
+      // ─── Supabase ───
+      function initSupabase() {
+        if (SUPABASE_URL.includes('YOUR_PROJECT')) {
+          console.warn('Supabase not configured — running in offline/demo mode.');
+          document.getElementById('connectionDot').classList.add('offline');
+          document.getElementById('connectionDot').title = 'Offline — Supabase not configured';
+          return;
+        }
+
+        try {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          fetchCurrentState();
+          subscribeRealtime();
+        } catch (err) {
+          console.error('Supabase init error:', err);
+          document.getElementById('connectionDot').classList.add('offline');
+        }
+      }
+
+      async function fetchCurrentState() {
+        if (!supabase) return;
+        try {
+          const { data, error } = await supabase
+            .from('competition_state')
+            .select('current_entry_index')
+            .eq('id', 1)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setCurrentEntry(data.current_entry_index);
+          }
+        } catch (err) {
+          console.error('Fetch state error:', err);
+        }
+      }
+
+      function subscribeRealtime() {
+        if (!supabase) return;
+
+        realtimeChannel = supabase
+          .channel('competition_state_changes')
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'competition_state', filter: 'id=eq.1' },
+            (payload) => {
+              const newIndex = payload.new.current_entry_index;
+              setCurrentEntry(newIndex);
+            }
+          )
+          .subscribe((status) => {
+            const dot = document.getElementById('connectionDot');
+            if (status === 'SUBSCRIBED') {
+              dot.classList.remove('offline');
+              dot.title = 'Connected — live updates';
+            } else {
+              dot.classList.add('offline');
+              dot.title = 'Reconnecting...';
+            }
+          });
+      }
+
+      function setCurrentEntry(index) {
+        currentEntryIndex = index;
+
+        // Auto-filter to current day based on Now Playing
+        if (index >= 0 && index < SCHEDULE.length) {
+          const currentDay = SCHEDULE[index].day;
+          if (filters.day !== currentDay) {
+            filters.day = currentDay;
+            // Update day chip UI
+            document.querySelectorAll('[data-filter="day"]').forEach(chip => {
+              chip.classList.toggle('active', chip.dataset.value === currentDay);
+            });
+          }
+        }
+
+        updateNowPlaying();
+        updateUpNextAlert();
+        updateQuickGlance();
+        renderSchedule();
+        updateAdminDisplay();
+        // Auto-scroll to the current dance
+        setTimeout(() => scrollToNowPlaying(), 100);
+      }
+
+      async function advanceDance(direction) {
+        const newIndex = Math.max(-1, Math.min(SCHEDULE.length - 1, currentEntryIndex + direction));
+        if (newIndex === currentEntryIndex) return;
+
+        // Update locally immediately for responsiveness
+        setCurrentEntry(newIndex);
+
+        if (supabase) {
+          try {
+            const { error } = await supabase
+              .from('competition_state')
+              .update({ current_entry_index: newIndex, updated_at: new Date().toISOString() })
+              .eq('id', 1);
+            if (error) console.error('Update error:', error);
+          } catch (err) {
+            console.error('Advance error:', err);
+          }
+        }
+      }
+
+      function jumpToEntry(val) {
+        val = val.trim();
+        if (!val) return;
+        const idx = SCHEDULE.findIndex(e => e.entry_id === val);
+        if (idx >= 0) {
+          const diff = idx - currentEntryIndex;
+          advanceDance(diff);
+          document.getElementById('adminJump').value = '';
         } else {
-          dot.classList.add('offline');
-          dot.title = 'Reconnecting...';
+          document.getElementById('adminJump').style.borderColor = '#ef4444';
+          setTimeout(() => { document.getElementById('adminJump').style.borderColor = ''; }, 1000);
         }
-      });
-  }
-
-  function setCurrentEntry(index) {
-    currentEntryIndex = index;
-    updateNowPlaying();
-    updateUpNextAlert();
-    renderSchedule();
-    updateAdminDisplay();
-  }
-
-  async function advanceDance(direction) {
-    const newIndex = Math.max(-1, Math.min(SCHEDULE.length - 1, currentEntryIndex + direction));
-    if (newIndex === currentEntryIndex) return;
-
-    // Update locally immediately for responsiveness
-    setCurrentEntry(newIndex);
-
-    if (supabase) {
-      try {
-        const { error } = await supabase
-          .from('competition_state')
-          .update({ current_entry_index: newIndex, updated_at: new Date().toISOString() })
-          .eq('id', 1);
-        if (error) console.error('Update error:', error);
-      } catch (err) {
-        console.error('Advance error:', err);
       }
-    }
-  }
 
-  function jumpToEntry(val) {
-    val = val.trim();
-    if (!val) return;
-    const idx = SCHEDULE.findIndex(e => e.entry_id === val);
-    if (idx >= 0) {
-      const diff = idx - currentEntryIndex;
-      advanceDance(diff);
-      document.getElementById('adminJump').value = '';
-    } else {
-      document.getElementById('adminJump').style.borderColor = '#ef4444';
-      setTimeout(() => { document.getElementById('adminJump').style.borderColor = ''; }, 1000);
-    }
-  }
+      // ─── Now Playing Banner ───
+      function updateNowPlaying() {
+        const el = document.getElementById('nowPlayingContent');
+        if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) {
+          el.innerHTML = '<div class="now-playing-none">Competition has not started</div>';
+          return;
+        }
 
-  // ─── Now Playing Banner ───
-  function updateNowPlaying() {
-    const el = document.getElementById('nowPlayingContent');
-    if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) {
-      el.innerHTML = '<div class="now-playing-none">Competition has not started</div>';
-      return;
-    }
-
-    const dance = SCHEDULE[currentEntryIndex];
-    el.innerHTML = `
+        const dance = SCHEDULE[currentEntryIndex];
+        el.innerHTML = `
       <div class="now-playing-entry">#${dance.entry_id} · ${dance.approx_time} · Day ${dance.day}</div>
       <div class="now-playing-title">${escapeHtml(dance.routine_title)}</div>
       <div class="now-playing-meta">
@@ -851,160 +1291,246 @@
         <span>${escapeHtml(dance.category)}</span>
       </div>
     `;
-  }
-
-  // ─── Up Next Alert ───
-  function updateUpNextAlert() {
-    const alertEl = document.getElementById('upNextAlert');
-    const textEl = document.getElementById('upNextText');
-    const countEl = document.getElementById('upNextCount');
-
-    if (currentEntryIndex < 0 || favorites.size === 0) {
-      alertEl.classList.remove('visible');
-      return;
-    }
-
-    // Find favorited dances coming up within 5 entries
-    const upcoming = [];
-    for (let i = currentEntryIndex + 1; i <= Math.min(currentEntryIndex + 5, SCHEDULE.length - 1); i++) {
-      if (favorites.has(SCHEDULE[i].entry_id)) {
-        upcoming.push({ dance: SCHEDULE[i], distance: i - currentEntryIndex });
       }
-    }
 
-    if (upcoming.length === 0) {
-      alertEl.classList.remove('visible');
-      return;
-    }
+      // ─── Up Next Alert ───
+      function updateUpNextAlert() {
+        const alertEl = document.getElementById('upNextAlert');
+        const textEl = document.getElementById('upNextText');
+        const countEl = document.getElementById('upNextCount');
 
-    const next = upcoming[0];
-    const minEst = next.distance * 3;
-    textEl.textContent = `"${next.dance.routine_title}" is ${next.distance === 1 ? 'UP NEXT!' : `${next.distance} dances away (~${minEst} min)`}`;
-    countEl.textContent = upcoming.length > 1 ? `+${upcoming.length - 1} more starred dance${upcoming.length > 2 ? 's' : ''} coming up` : '';
-    alertEl.classList.add('visible');
-  }
+        if (currentEntryIndex < 0 || favorites.size === 0) {
+          alertEl.classList.remove('visible');
+          return;
+        }
 
-  // ─── Tabs ───
-  window.switchTab = function(tab) {
-    currentView = tab;
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-    renderSchedule();
-  };
+        // Find favorited dances coming up within 5 entries
+        const upcoming = [];
+        for (let i = currentEntryIndex + 1; i <= Math.min(currentEntryIndex + 5, SCHEDULE.length - 1); i++) {
+          if (favorites.has(SCHEDULE[i].entry_id)) {
+            upcoming.push({ dance: SCHEDULE[i], distance: i - currentEntryIndex });
+          }
+        }
 
-  // ─── Filters ───
-  window.setFilter = function(type, value, btn) {
-    filters[type] = value;
-    // Update day chip UI
-    document.querySelectorAll(`[data-filter="${type}"]`).forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    renderSchedule();
-  };
+        if (upcoming.length === 0) {
+          alertEl.classList.remove('visible');
+          return;
+        }
 
-  window.setStudioFilter = function(select) {
-    filters.studioCode = select.value;
-    select.classList.toggle('active', !!select.value);
-    renderSchedule();
-  };
+        const next = upcoming[0];
+        const minEst = next.distance * 3;
+        textEl.textContent = `"${next.dance.routine_title}" is ${next.distance === 1 ? 'UP NEXT!' : `${next.distance} dances away (~${minEst} min)`}`;
+        countEl.textContent = upcoming.length > 1 ? `+${upcoming.length - 1} more starred dance${upcoming.length > 2 ? 's' : ''} coming up` : '';
+        alertEl.classList.add('visible');
+      }
 
-  window.setSelectFilter = function(key, select) {
-    filters[key] = select.value;
-    select.classList.toggle('active', !!select.value);
-    renderSchedule();
-  };
+      // ─── Quick Glance Bar ───
+      function updateQuickGlance() {
+        const glanceEl = document.getElementById('quickGlance');
+        const titleEl = document.getElementById('quickGlanceTitle');
+        const awayEl = document.getElementById('quickGlanceAway');
+        const timeEl = document.getElementById('quickGlanceTime');
+        const listEl = document.getElementById('quickGlanceList');
 
-  // ─── Search ───
-  document.getElementById('searchInput').addEventListener('input', function(e) {
-    searchQuery = e.target.value.toLowerCase().trim();
-    renderSchedule();
-  });
+        if (currentEntryIndex < 0 || favorites.size === 0) {
+          glanceEl.classList.remove('visible');
+          return;
+        }
 
-  // ─── Favorites ───
-  window.toggleFavorite = function(entryId, event) {
-    event.stopPropagation();
-    if (favorites.has(entryId)) {
-      favorites.delete(entryId);
-    } else {
-      favorites.add(entryId);
-    }
-    localStorage.setItem('nycda_favorites', JSON.stringify([...favorites]));
-    updateFavCount();
-    updateUpNextAlert();
-    renderSchedule();
-  };
+        // Find ALL starred upcoming dances
+        const upcomingFavs = [];
+        for (let i = currentEntryIndex + 1; i < SCHEDULE.length; i++) {
+          if (favorites.has(SCHEDULE[i].entry_id)) {
+            const distance = i - currentEntryIndex;
+            upcomingFavs.push({ dance: SCHEDULE[i], distance, estMins: distance * 3 });
+          }
+        }
 
-  function updateFavCount() {
-    const badge = document.getElementById('favCount');
-    if (favorites.size > 0) {
-      badge.style.display = 'inline-block';
-      badge.textContent = favorites.size;
-    } else {
-      badge.style.display = 'none';
-    }
-  }
+        if (upcomingFavs.length === 0) {
+          glanceEl.classList.remove('visible');
+          document.body.classList.remove('quick-glance-active');
+          return;
+        }
 
-  // ─── Render ───
-  function renderSchedule() {
-    const container = document.getElementById('danceList');
+        // Update main display with NEXT starred dance
+        const next = upcomingFavs[0];
+        titleEl.textContent = next.dance.routine_title;
+        if (next.distance === 1) {
+          awayEl.textContent = 'UP NEXT!';
+          timeEl.textContent = '';
+        } else {
+          awayEl.textContent = `${next.distance} away`;
+          timeEl.textContent = `~${next.estMins}m`;
+        }
 
-    let dances = SCHEDULE;
+        // Build expandable list
+        listEl.innerHTML = upcomingFavs.map(item => `
+          <div class="quick-glance-item" onclick="scrollToDance('${item.dance.entry_id}')">
+            <div class="quick-glance-item-title">${escapeHtml(item.dance.routine_title)}</div>
+            <div class="quick-glance-item-badge">${item.distance === 1 ? 'UP NEXT!' : `${item.distance} away ~${item.estMins}m`}</div>
+          </div>
+        `).join('');
 
-    // Filter by tab
-    if (currentView === 'favorites') {
-      dances = dances.filter(d => favorites.has(d.entry_id));
-    }
+        glanceEl.classList.add('visible');
+        document.body.classList.add('quick-glance-active');
+      }
 
-    // Apply filters
-    if (filters.day !== 'all') {
-      dances = dances.filter(d => d.day === filters.day);
-    }
-    if (filters.studioCode) {
-      dances = dances.filter(d => d.studio_code === filters.studioCode);
-    }
-    if (filters.ageGroup) {
-      dances = dances.filter(d => d.ageGroup === filters.ageGroup);
-    }
-    if (filters.genre) {
-      dances = dances.filter(d => d.genre === filters.genre);
-    }
-    if (filters.type) {
-      dances = dances.filter(d => d.type === filters.type);
-    }
+      window.toggleQuickGlance = function () {
+        const glanceEl = document.getElementById('quickGlance');
+        glanceEl.classList.toggle('expanded');
+      };
 
-    // Search
-    if (searchQuery) {
-      dances = dances.filter(d =>
-        d.routine_title.toLowerCase().includes(searchQuery) ||
-        d.studio_code.toLowerCase().includes(searchQuery) ||
-        d.entry_id.toLowerCase().includes(searchQuery) ||
-        d.category.toLowerCase().includes(searchQuery)
-      );
-    }
+      window.scrollToDance = function (entryId) {
+        const card = document.getElementById('dance-' + entryId);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.animation = 'highlight 1s ease-out';
+          setTimeout(() => card.style.animation = '', 1000);
+        }
+        // Collapse the list after tapping
+        document.getElementById('quickGlance').classList.remove('expanded');
+      };
 
-    if (dances.length === 0) {
-      const msg = currentView === 'favorites'
-        ? '<div class="empty-icon">⭐</div>No favorites yet.<br>Tap the star on any dance to track it!'
-        : '<div class="empty-icon">🔍</div>No dances match your filters.';
-      container.innerHTML = `<div class="dance-list-empty">${msg}</div>`;
-      return;
-    }
+      // ─── Tabs ───
+      window.switchTab = function (tab) {
+        currentView = tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+        renderSchedule();
+      };
 
-    // Build HTML using document fragment for performance
-    const fragment = document.createDocumentFragment();
+      // ─── Filters ───
+      window.setFilter = function (type, value, btn) {
+        filters[type] = value;
+        // Update day chip UI
+        document.querySelectorAll(`[data-filter="${type}"]`).forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        renderSchedule();
+      };
 
-    for (const dance of dances) {
-      const isPassed = dance.index < currentEntryIndex;
-      const isNowPlaying = dance.index === currentEntryIndex;
-      const isFav = favorites.has(dance.entry_id);
-      const isUpcomingFav = isFav && dance.index > currentEntryIndex && dance.index <= currentEntryIndex + 5;
+      window.setStudioFilter = function (select) {
+        filters.studioCode = select.value;
+        select.classList.toggle('active', !!select.value);
+        renderSchedule();
+      };
 
-      const card = document.createElement('div');
-      card.className = 'dance-card'
-        + (isPassed ? ' passed' : '')
-        + (isNowPlaying ? ' now-playing-card' : '')
-        + (isUpcomingFav ? ' upcoming-fav' : '');
-      card.id = 'dance-' + dance.entry_id;
+      window.setSelectFilter = function (key, select) {
+        filters[key] = select.value;
+        select.classList.toggle('active', !!select.value);
+        renderSchedule();
+      };
 
-      card.innerHTML = `
+      // ─── Search ───
+      document.getElementById('searchInput').addEventListener('input', function (e) {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderSchedule();
+      });
+
+      // ─── Favorites ───
+      window.toggleFavorite = function (entryId, event) {
+        event.stopPropagation();
+        if (favorites.has(entryId)) {
+          favorites.delete(entryId);
+        } else {
+          favorites.add(entryId);
+        }
+        localStorage.setItem('nycda_favorites', JSON.stringify([...favorites]));
+        updateFavCount();
+        updateUpNextAlert();
+        updateQuickGlance();
+        renderSchedule();
+      };
+
+      function updateFavCount() {
+        const badge = document.getElementById('favCount');
+        if (favorites.size > 0) {
+          badge.style.display = 'inline-block';
+          badge.textContent = favorites.size;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      // ─── Render ───
+      function renderSchedule() {
+        const container = document.getElementById('danceList');
+
+        let dances = SCHEDULE;
+
+        // Filter by tab
+        if (currentView === 'favorites') {
+          dances = dances.filter(d => favorites.has(d.entry_id));
+        }
+
+        // Apply filters
+        if (filters.day !== 'all') {
+          dances = dances.filter(d => d.day === filters.day);
+        }
+        if (filters.studioCode) {
+          dances = dances.filter(d => d.studio_code === filters.studioCode);
+        }
+        if (filters.ageGroup) {
+          dances = dances.filter(d => d.ageGroup === filters.ageGroup);
+        }
+        if (filters.genre) {
+          dances = dances.filter(d => d.genre === filters.genre);
+        }
+        if (filters.type) {
+          dances = dances.filter(d => d.type === filters.type);
+        }
+
+        // Search
+        if (searchQuery) {
+          dances = dances.filter(d =>
+            d.routine_title.toLowerCase().includes(searchQuery) ||
+            d.studio_code.toLowerCase().includes(searchQuery) ||
+            d.entry_id.toLowerCase().includes(searchQuery) ||
+            d.category.toLowerCase().includes(searchQuery)
+          );
+        }
+
+        if (dances.length === 0) {
+          const msg = currentView === 'favorites'
+            ? '<div class="empty-icon">⭐</div>No favorites yet.<br>Tap the star on any dance to track it!'
+            : '<div class="empty-icon">🔍</div>No dances match your filters.';
+          container.innerHTML = `<div class="dance-list-empty">${msg}</div>`;
+          return;
+        }
+
+        // Build HTML using document fragment for performance
+        const fragment = document.createDocumentFragment();
+
+        for (const dance of dances) {
+          const isPassed = dance.index < currentEntryIndex;
+          const isNowPlaying = dance.index === currentEntryIndex;
+          const isFav = favorites.has(dance.entry_id);
+          const isUpcomingFav = isFav && dance.index > currentEntryIndex && dance.index <= currentEntryIndex + 5;
+          const dancesAway = dance.index - currentEntryIndex;
+
+          const card = document.createElement('div');
+          card.className = 'dance-card'
+            + (isPassed ? ' passed' : '')
+            + (isNowPlaying ? ' now-playing-card' : '')
+            + (isUpcomingFav ? ' upcoming-fav' : '');
+          card.id = 'dance-' + dance.entry_id;
+
+          // Build countdown badge for favorited upcoming dances
+          let countdownBadge = '';
+          if (isFav && !isPassed && !isNowPlaying && currentEntryIndex >= 0) {
+            const estMinutes = dancesAway * 3; // ~3 min per dance
+            const waitText = `<span class="wait-time">~${estMinutes}m</span>`;
+
+            if (dancesAway === 1) {
+              countdownBadge = '<span class="countdown-badge up-next">Up Next!</span>';
+            } else if (dancesAway <= 3) {
+              countdownBadge = `<span class="countdown-badge urgent">${dancesAway} away ${waitText}</span>`;
+            } else if (dancesAway <= 6) {
+              countdownBadge = `<span class="countdown-badge soon">${dancesAway} away ${waitText}</span>`;
+            } else {
+              countdownBadge = `<span class="countdown-badge away">${dancesAway} away ${waitText}</span>`;
+            }
+          }
+
+          card.innerHTML = `
         <div class="entry-num">${escapeHtml(dance.entry_id)}</div>
         <div class="dance-info">
           <div class="dance-title">${escapeHtml(dance.routine_title)}</div>
@@ -1014,60 +1540,65 @@
           </div>
           <div class="dance-category">${escapeHtml(dance.category)}</div>
         </div>
+        ${countdownBadge}
         <button class="fav-btn ${isFav ? 'favorited' : ''}" onclick="toggleFavorite('${dance.entry_id}', event)" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
-          ${isFav ? '★' : '☆'}
+          ${isFav
+              ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>'
+              : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>'
+            }
         </button>
       `;
 
-      fragment.appendChild(card);
-    }
+          fragment.appendChild(card);
+        }
 
-    container.innerHTML = '';
-    container.appendChild(fragment);
-  }
+        container.innerHTML = '';
+        container.appendChild(fragment);
+      }
 
-  // ─── Scroll to Now Playing ───
-  window.scrollToNowPlaying = function() {
-    if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) return;
-    const dance = SCHEDULE[currentEntryIndex];
-    const el = document.getElementById('dance-' + dance.entry_id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.style.transition = 'box-shadow 0.3s';
-      el.style.boxShadow = '0 0 0 3px var(--accent)';
-      setTimeout(() => { el.style.boxShadow = ''; }, 1500);
-    }
-  };
+      // ─── Scroll to Now Playing ───
+      window.scrollToNowPlaying = function () {
+        if (currentEntryIndex < 0 || currentEntryIndex >= SCHEDULE.length) return;
+        const dance = SCHEDULE[currentEntryIndex];
+        const el = document.getElementById('dance-' + dance.entry_id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'box-shadow 0.3s';
+          el.style.boxShadow = '0 0 0 3px var(--accent)';
+          setTimeout(() => { el.style.boxShadow = ''; }, 1500);
+        }
+      };
 
-  // ─── Admin Display ───
-  function updateAdminDisplay() {
-    if (!isAdmin) return;
-    const el = document.getElementById('adminEntryNum');
-    if (currentEntryIndex >= 0 && currentEntryIndex < SCHEDULE.length) {
-      el.textContent = SCHEDULE[currentEntryIndex].entry_id;
-    } else {
-      el.textContent = '—';
-    }
-  }
+      // ─── Admin Display ───
+      function updateAdminDisplay() {
+        if (!isAdmin) return;
+        const el = document.getElementById('adminEntryNum');
+        if (currentEntryIndex >= 0 && currentEntryIndex < SCHEDULE.length) {
+          el.textContent = SCHEDULE[currentEntryIndex].entry_id;
+        } else {
+          el.textContent = '—';
+        }
+      }
 
-  // Expose for admin bar inline handlers
-  window.advanceDance = advanceDance;
-  window.jumpToEntry = jumpToEntry;
+      // Expose for admin bar inline handlers
+      window.advanceDance = advanceDance;
+      window.jumpToEntry = jumpToEntry;
 
-  // ─── Helpers ───
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+      // ─── Helpers ───
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
 
-  // ─── Start ───
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+      // ─── Start ───
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
 
-})();
-</script>
+    })();
+  </script>
 </body>
+
 </html>
