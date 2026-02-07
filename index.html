@@ -507,6 +507,31 @@
       color: var(--chip-active-text);
     }
 
+    .filter-chip.is-live::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-left: 8px;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+      animation: pulse-live 2s infinite;
+    }
+
+    @keyframes pulse-live {
+      0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
     .filter-chip:active {
       transform: scale(0.95);
     }
@@ -1241,16 +1266,19 @@
       function setCurrentEntry(index) {
         currentEntryIndex = index;
 
-        // Auto-filter to current day based on Now Playing
-        if (index >= 0 && index < SCHEDULE.length) {
-          const currentDay = SCHEDULE[index].day;
-          if (filters.day !== currentDay) {
-            filters.day = currentDay;
-            // Update day chip UI
-            document.querySelectorAll('[data-filter="day"]').forEach(chip => {
-              chip.classList.toggle('active', chip.dataset.value === currentDay);
-            });
-          }
+        // Track live day vs active filter
+        const liveDay = (index >= 0 && index < SCHEDULE.length) ? SCHEDULE[index].day : null;
+        document.querySelectorAll('[data-filter="day"]').forEach(chip => {
+          chip.classList.toggle('is-live', chip.dataset.value === liveDay);
+        });
+
+        // Auto-filter to current day based on Now Playing (only if changed)
+        if (liveDay && filters.day !== liveDay) {
+          filters.day = liveDay;
+          // Update day chip UI for active filter
+          document.querySelectorAll('[data-filter="day"]').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.value === liveDay);
+          });
         }
 
         updateNowPlaying();
