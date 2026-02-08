@@ -1399,9 +1399,18 @@
       });
 
       window.resetAllFilters = function () {
+        // Determine target day (auto-select live day)
+        let targetDay = 'all';
+        if (typeof currentEntryIndex !== 'undefined' && currentEntryIndex >= 0 && typeof SCHEDULE !== 'undefined' && currentEntryIndex < SCHEDULE.length) {
+          const entry = SCHEDULE[currentEntryIndex];
+          if (entry && entry.day) {
+            targetDay = entry.day;
+          }
+        }
+
         // Reset state
         searchQuery = '';
-        filters = { day: 'all', studioCode: '', ageGroup: '', genre: '', type: '' };
+        filters = { day: targetDay, studioCode: '', ageGroup: '', genre: '', type: '' };
         currentView = 'all';
 
         // Update UI
@@ -1410,7 +1419,7 @@
 
         // Reset Day Chips
         document.querySelectorAll('[data-filter="day"]').forEach(c => {
-          c.classList.toggle('active', c.dataset.value === 'all');
+          c.classList.toggle('active', c.dataset.value === targetDay);
         });
 
         // Reset Selects
