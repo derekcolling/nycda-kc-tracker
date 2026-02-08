@@ -485,16 +485,29 @@
       color: var(--chip-active-text);
     }
 
-    .filter-chip.is-live {
-      /* Base style, background handled by .active or :not(.active) specific rules */
-      position: relative;
+    .filter-chip.is-live .live-badge {
+      display: inline-flex;
     }
 
-    .filter-chip.is-live:not(.active) {
-      /* Subtle background tint for live but inactive */
-      background: var(--accent-glow);
-      color: var(--text);
-      font-weight: 700;
+    .live-badge {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: var(--now-playing-bg);
+      color: #fff;
+    }
+
+    /* When chip is active (green bg), make badge white for contrast */
+    .filter-chip.active .live-badge {
+      background: #fff;
+      color: var(--now-playing-bg);
     }
 
 
@@ -970,8 +983,12 @@
   <!-- Filters -->
   <div class="filters" id="filterBar">
 
-    <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">Day 1</button>
-    <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">Day 2</button>
+    <button class="filter-chip" data-filter="day" data-value="1" onclick="setFilter('day','1',this)">
+      Day 1 <span class="live-badge">LIVE</span>
+    </button>
+    <button class="filter-chip" data-filter="day" data-value="2" onclick="setFilter('day','2',this)">
+      Day 2 <span class="live-badge">LIVE</span>
+    </button>
     <select class="filter-select" id="studioFilter" onchange="setStudioFilter(this)">
       <option value="">All Studios</option>
     </select>
