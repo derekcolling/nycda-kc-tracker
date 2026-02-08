@@ -711,10 +711,12 @@
       width: 44px;
       height: 44px;
       border: none;
-      background: none;
+      background: #f3f4f6;
+      /* Light gray circle */
       cursor: pointer;
       font-size: 22px;
-      color: #d1d5db;
+      color: #9ca3af;
+      /* Darker gray for better visibility */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -724,11 +726,15 @@
     }
 
     .fav-btn:active {
-      transform: scale(1.2);
+      transform: scale(0.92);
+      background: #e5e7eb;
     }
 
     .fav-btn.favorited {
-      color: var(--favorite);
+      background: #fef9c3;
+      /* Light yellow background */
+      color: #ca8a04;
+      /* Deep Gold icon */
     }
 
     /* ── Scroll to Now Playing FAB ── */
